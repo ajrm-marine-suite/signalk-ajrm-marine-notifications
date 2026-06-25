@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AJRM Marine Notifications</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">AJRM Marine broker diagnostics</p>
+          <h1>Notifications Plus</h1>
+          <p class="lede">
+            Provider-neutral runtime broker for standard Signal K notifications,
+            active/recent projections, priority ordering, correlation, and audio
+            delivery requests.
+          </p>
+        </div>
+        <p id="status" class="status-pill">Loading…</p>
+      </header>
+
+      <section class="grid summary" aria-label="Broker summary">
+        <article>
+          <span id="activeCount">0</span>
+          <p>Active</p>
+        </article>
+        <article>
+          <span id="recentCount">0</span>
+          <p>Recent</p>
+        </article>
+        <article>
+          <span id="audioSequence">0</span>
+          <p>Audio sequence</p>
+        </article>
+        <article>
+          <span id="providerCount">0</span>
+          <p>Providers</p>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Projection health</h2>
+        <dl class="facts">
+          <div><dt>Contract</dt><dd id="contract">—</dd></div>
+          <div><dt>Session</dt><dd id="sessionId">—</dd></div>
+          <div><dt>Sequence</dt><dd id="sequence">—</dd></div>
+          <div><dt>Server time</dt><dd id="serverTime">—</dd></div>
+          <div><dt>Updated</dt><dd id="updatedAt">—</dd></div>
+        </dl>
+      </section>
+
+      <section class="panel">
+        <h2>Audio delivery</h2>
+        <div id="audioRequest" class="debug-box">Audio delivery events are published separately.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Providers</h2>
+        <div id="providers" class="provider-list">None.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Active brokered notifications</h2>
+        <div id="active" class="card-list"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Recent activity / history</h2>
+        <div id="history" class="card-list"></div>
+      </section>
+
+      <section class="panel">
+        <details>
+          <summary>Raw broker projection JSON</summary>
+          <pre id="rawProjection" class="raw-json">{}</pre>
+        </details>
+      </section>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>

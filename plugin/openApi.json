@@ -1,0 +1,181 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Notifications Plus API",
+    "version": "0.5.0",
+    "description": "Read-only broker projection for standard Signal K notifications with separate one-shot audio delivery events."
+  },
+  "servers": [
+    {
+      "url": "/plugins/signalk-ajrm-marine-notifications"
+    }
+  ],
+  "paths": {
+    "/status": {
+      "get": {
+        "summary": "Get active and historical broker state",
+        "responses": {
+          "200": {
+            "description": "Current broker state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "active": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Envelope"
+                      }
+                    },
+                    "contract": {
+                      "type": "string",
+                      "enum": [
+                        "notifications-plus-projection"
+                      ]
+                    },
+                    "contractVersion": {
+                      "type": "integer",
+                      "enum": [
+                        1
+                      ]
+                    },
+                    "sessionId": {
+                      "type": "string"
+                    },
+                    "sequence": {
+                      "type": "integer"
+                    },
+                    "serverTime": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "recentActivity": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Envelope"
+                      }
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Envelope"
+                      }
+                    },
+                    "audioSequence": {
+                      "type": "integer"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/history/clear": {
+      "post": {
+        "summary": "Clear persisted notification history without changing active notifications",
+        "responses": {
+          "200": {
+            "description": "History cleared"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Envelope": {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "provider",
+          "subjectKey",
+          "eventId",
+          "lifecycle",
+          "timestamp",
+          "priority",
+          "history",
+          "delivery",
+          "presentation"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "provider": {
+            "type": "string"
+          },
+          "providerSessionId": {
+            "type": "string"
+          },
+          "sourceSequence": {
+            "type": "integer"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "correlationOrigin": {
+            "type": "string"
+          },
+          "subjectKey": {
+            "type": "string"
+          },
+          "eventId": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "number"
+          },
+          "lifecycle": {
+            "type": "string",
+            "enum": [
+              "active",
+              "resolved",
+              "event"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "priority": {
+            "type": "object"
+          },
+          "supersedes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "history": {
+            "type": "object"
+          },
+          "delivery": {
+            "type": "object"
+          },
+          "presentation": {
+            "type": "object"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "context": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}
