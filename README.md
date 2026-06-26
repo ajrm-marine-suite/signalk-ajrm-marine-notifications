@@ -2,6 +2,9 @@
 
 ## Version 1 baseline
 
+`v0.5.1` preserves provider-supplied `presentation.audioMessage` and forwards it
+to Audio as the spoken request text when present.
+
 `v0.5.0` updates the diagnostics page to match the split stream model: the
 status page shows broker state and audio sequence count, while actual audio
 delivery remains a one-shot Signal K event at `plugins.ajrmMarineNotifications.audio`.
@@ -116,7 +119,7 @@ This software is an Alpha Release and must not be relied upon for navigation or 
 
 ```bash
 cd ~/.signalk
-npm install git+ssh://git@ssh.github.com:443/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.0 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.1 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

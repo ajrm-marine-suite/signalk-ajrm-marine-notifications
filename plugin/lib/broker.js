@@ -281,7 +281,7 @@ function audioRequest(state, envelope) {
     correlationId: envelope.correlationId,
     subjectKey: envelope.subjectKey,
     eventId: envelope.eventId,
-    message: envelope.presentation.message,
+    message: envelope.presentation.audioMessage || envelope.presentation.message,
     priorityScore: envelope.priority.score,
     preempt: envelope.delivery.preempt,
     expiresAt: envelope.audioExpiresAt || envelope.expiresAt || null,

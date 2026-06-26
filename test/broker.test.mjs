@@ -74,6 +74,30 @@ test("broker preserves provider correlation and supplies it to audio requests", 
   assert.equal(audio.audioRequest.requestId, `${projection.sessionId}:1`);
 });
 
+test("broker prefers provider audio message for audio requests", () => {
+  const state = createBrokerState();
+  const result = applyEnvelope(
+    state,
+    envelope({
+      presentation: {
+        title: "Traffic",
+        label: "Traffic advisory",
+        message: "Traffic advisory. Small craft 235900007 at 1 o'clock.",
+        audioMessage: "Traffic advisory. Small craft at 1 o'clock.",
+        category: "cpa",
+      },
+    }),
+  );
+
+  const projection = brokerProjection(state);
+  const audio = audioDeliveryProjection(state, result.audioEvent);
+  assert.equal(
+    projection.active[0].presentation.message,
+    "Traffic advisory. Small craft 235900007 at 1 o'clock.",
+  );
+  assert.equal(audio.audioRequest.message, "Traffic advisory. Small craft at 1 o'clock.");
+});
+
 test("broker creates a marked correlation identifier for legacy input", () => {
   const state = createBrokerState();
   applyEnvelope(state, envelope());

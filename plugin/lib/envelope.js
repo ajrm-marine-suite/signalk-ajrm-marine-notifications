@@ -64,6 +64,7 @@ function normalizeEnvelope(raw, { now = Date.now() } = {}) {
       title: clean(raw.presentation?.title) || "Notification",
       label: clean(raw.presentation?.label) || titleCase(priorityLevel),
       message: clean(raw.presentation?.message),
+      audioMessage: clean(raw.presentation?.audioMessage),
       category: clean(raw.presentation?.category),
       facts: Array.isArray(raw.presentation?.facts)
         ? raw.presentation.facts.map(clean).filter(Boolean).slice(0, 12)
