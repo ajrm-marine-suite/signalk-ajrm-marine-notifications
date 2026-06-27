@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3
+
+- Update broker regression fixtures to use AJRM Marine Traffic subject keys.
+
 ## 0.5.2
 
 - Update broker regression fixtures to use AJRM Marine capture subject keys.

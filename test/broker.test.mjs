@@ -151,7 +151,7 @@ test("supersedes resolves another subject before appending a one-shot event", ()
   applyEnvelope(
     state,
     envelope({
-      subjectKey: "ais-plus:gps-lost",
+      subjectKey: "ajrm-marine:traffic:system:gps-lost",
       eventId: "gps-lost-1",
       priority: { level: "danger", score: 900 },
     }),
@@ -159,10 +159,10 @@ test("supersedes resolves another subject before appending a one-shot event", ()
   applyEnvelope(
     state,
     envelope({
-      subjectKey: "ais-plus:gps-received",
+      subjectKey: "ajrm-marine:traffic:system:gps-received",
       eventId: "gps-received-1",
       lifecycle: "event",
-      supersedes: ["ais-plus:gps-lost"],
+      supersedes: ["ajrm-marine:traffic:system:gps-lost"],
       history: { policy: "always" },
       priority: { level: "information", score: 200 },
       delivery: { visual: true, audio: true },
@@ -316,7 +316,7 @@ test("standard normal state resolves an active notification", () => {
 test("standard normal state resolves an extended active notification retained by Signal K", () => {
   const state = createBrokerState();
   const activeEnvelope = envelope({
-    subjectKey: "ais-plus:vessel:235900004",
+    subjectKey: "ajrm-marine:traffic:vessel:235900004",
     eventId: "collision-1",
   });
   applySignalKNotification(state, "notifications.collision.235900004", {
@@ -391,7 +391,7 @@ test("extended one-shot events may use standard normal state", () => {
     message: "GPS signal received.",
     data: {
       ajrmMarineNotifications: envelope({
-        subjectKey: "ais-plus:gps-received",
+        subjectKey: "ajrm-marine:traffic:system:gps-received",
         eventId: "gps-received-1",
         lifecycle: "event",
         history: { policy: "always" },
