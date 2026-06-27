@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2
+
+- Update broker regression fixtures to use AJRM Marine capture subject keys.
+
 ## 0.5.1
 
 - Preserve provider-supplied `presentation.audioMessage` and use it for audio delivery requests when present.

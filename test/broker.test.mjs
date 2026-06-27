@@ -339,7 +339,7 @@ test("standard normal state resolves an extended active notification retained by
 test("blank normal clear with event envelope does not create duplicate audio", () => {
   const state = createBrokerState();
   const eventEnvelope = envelope({
-    subjectKey: "watchkeeper-capture:voyage:start",
+    subjectKey: "ajrm-marine-capture:voyage:start",
     eventId: "voyage-start-1",
     lifecycle: "event",
     history: { policy: "always" },
