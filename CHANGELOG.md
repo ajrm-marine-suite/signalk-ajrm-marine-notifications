@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.4
+
+- Update public install command to the current release tag.
+
 ## 0.5.3
 
 - Update broker regression fixtures to use AJRM Marine Traffic subject keys.
