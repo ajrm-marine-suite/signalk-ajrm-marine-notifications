@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.5
+
+- Align OpenAPI metadata and install documentation with the package version.
+
 ## 0.5.4
 
 - Update public install command to the current release tag.
