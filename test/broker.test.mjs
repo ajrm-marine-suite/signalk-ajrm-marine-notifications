@@ -233,6 +233,93 @@ test("duplicate active event IDs do not redeliver audio", () => {
   assert.equal(duplicate.audioEvent, null);
 });
 
+test("safety: repeated Traffic collision alarms create fresh audio delivery events", () => {
+  const state = createBrokerState();
+  const first = applySignalKNotification(
+    state,
+    "notifications.collision.235900004",
+    {
+      state: "alarm",
+      method: ["visual", "sound"],
+      message: "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+      data: {
+        ajrmMarineNotifications: envelope({
+          provider: "ajrm-marine-traffic",
+          subjectKey: "ajrm-marine:traffic:vessel:235900004",
+          eventId: "traffic-collision-235900004-1",
+          revision: 1,
+          priority: { level: "danger", score: 800 },
+          delivery: {
+            visual: true,
+            audio: true,
+            preempt: true,
+            localPlayback: true,
+            streamOutput: true,
+            repeatSeconds: 60,
+            expiresSeconds: 90,
+          },
+          presentation: {
+            title: "HARBOUR TUG",
+            label: "Collision alarm",
+            message: "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+            audioMessage: "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+            category: "cpa",
+          },
+          context: { mmsi: "235900004" },
+        }),
+      },
+    },
+    { now: Date.parse("2026-07-02T10:32:39.000Z") },
+  );
+  const repeat = applySignalKNotification(
+    state,
+    "notifications.collision.235900004",
+    {
+      state: "alarm",
+      method: ["visual", "sound"],
+      message: "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+      data: {
+        ajrmMarineNotifications: envelope({
+          provider: "ajrm-marine-traffic",
+          subjectKey: "ajrm-marine:traffic:vessel:235900004",
+          eventId: "traffic-collision-235900004-2",
+          revision: 2,
+          timestamp: "2026-07-02T10:33:39.000Z",
+          priority: { level: "danger", score: 800 },
+          delivery: {
+            visual: true,
+            audio: true,
+            preempt: false,
+            localPlayback: true,
+            streamOutput: true,
+            repeatSeconds: 60,
+            expiresSeconds: 90,
+          },
+          presentation: {
+            title: "HARBOUR TUG",
+            label: "Collision alarm",
+            message: "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+            audioMessage: "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+            category: "cpa",
+          },
+          context: { mmsi: "235900004" },
+        }),
+      },
+    },
+    { now: Date.parse("2026-07-02T10:33:39.000Z") },
+  );
+
+  assert.ok(first.audioEvent, "first collision alarm must request audio");
+  assert.ok(repeat.audioEvent, "same active collision alarm repeat must request audio");
+  assert.equal(first.audioEvent.audioSequence, 1);
+  assert.equal(repeat.audioEvent.audioSequence, 2);
+  assert.equal(brokerProjection(state).active.length, 1);
+  assert.equal(
+    audioDeliveryProjection(state, repeat.audioEvent).audioRequest.message,
+    "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+  );
+});
+
 test("duplicate one-shot event IDs do not redeliver audio or history", () => {
   const state = createBrokerState();
   const oneShot = envelope({
