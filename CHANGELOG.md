@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.6
+
+- Publish a compact OpenCPN message projection at
+  `plugins.ajrmMarineNotifications.openCpnMessages`.
+- Add `/openCpnMessages` for HTTP polling fallback clients.
+
 ## 0.5.5
 
 - Align OpenAPI metadata and install documentation with the package version.

@@ -9,11 +9,13 @@ const {
   brokerProjection,
   clearHistory,
   createBrokerState,
+  openCpnMessagesProjection,
 } = require("./lib/broker");
 
 const PLUGIN_ID = "signalk-ajrm-marine-notifications";
 const STATE_PATH = "plugins.ajrmMarineNotifications";
 const AUDIO_PATH = "plugins.ajrmMarineNotifications.audio";
+const OPENCPN_MESSAGES_PATH = "plugins.ajrmMarineNotifications.openCpnMessages";
 
 module.exports = function ajrmMarineNotifications(app) {
   const plugin = {};
@@ -66,6 +68,9 @@ module.exports = function ajrmMarineNotifications(app) {
         version: packageInfo.version,
         ...brokerProjection(state, { historyLimit: options.historyLimit }),
       });
+    });
+    router.get("/openCpnMessages", (_req, res) => {
+      res.json(openCpnMessagesProjection(state, { historyLimit: options.historyLimit }));
     });
     router.post("/history/clear", (_req, res) => {
       const cleared = clearHistory(state);
@@ -132,9 +137,19 @@ module.exports = function ajrmMarineNotifications(app) {
     const projection = brokerProjection(state, {
       historyLimit: options.historyLimit,
     });
+    const openCpnMessages = openCpnMessagesProjection(state, {
+      historyLimit: options.historyLimit,
+    });
     app.handleMessage(PLUGIN_ID, {
       context: "vessels.self",
-      updates: [{ values: [{ path: STATE_PATH, value: projection }] }],
+      updates: [
+        {
+          values: [
+            { path: STATE_PATH, value: projection },
+            { path: OPENCPN_MESSAGES_PATH, value: openCpnMessages },
+          ],
+        },
+      ],
     });
   }
 

@@ -5,6 +5,10 @@
 `v0.5.1` preserves provider-supplied `presentation.audioMessage` and forwards it
 to Audio as the spoken request text when present.
 
+`v0.5.6` publishes a compact OpenCPN message projection at
+`vessels.self.plugins.ajrmMarineNotifications.openCpnMessages` and serves the
+same shape at `/plugins/signalk-ajrm-marine-notifications/openCpnMessages`.
+
 `v0.5.0` updates the diagnostics page to match the split stream model: the
 status page shows broker state and audio sequence count, while actual audio
 delivery remains a one-shot Signal K event at `plugins.ajrmMarineNotifications.audio`.
@@ -101,6 +105,23 @@ That delivery event carries `event`, `audioRequest`, `audioSequence`, and the
 broker session. It is published only when a new provider-authored event should
 be spoken.
 
+OpenCPN message displays can read a compact visual projection from:
+
+```text
+vessels.self.plugins.ajrmMarineNotifications.openCpnMessages
+```
+
+The same data is available over HTTP at:
+
+```text
+/plugins/signalk-ajrm-marine-notifications/openCpnMessages
+```
+
+This projection is intentionally small and display-oriented: active alerts are
+listed before recent messages, duplicate message text is removed, and the
+payload includes a `messages` array plus `panelEvents` and `announcementLog`
+compatibility views.
+
 Provider `providerSessionId`, `sourceSequence`, and `correlationId` fields are
 preserved end to end. For legacy notifications without a correlation ID, the
 broker creates an opaque broker-local ID and marks
@@ -119,7 +140,7 @@ This software is an Alpha Release and must not be relied upon for navigation or 
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.5 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.6 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

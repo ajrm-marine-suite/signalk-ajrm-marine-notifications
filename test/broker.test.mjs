@@ -7,6 +7,7 @@ import {
   brokerProjection,
   clearHistory,
   createBrokerState,
+  openCpnMessagesProjection,
 } from "../plugin/lib/broker.js";
 
 function envelope(overrides = {}) {
@@ -444,4 +445,88 @@ test("clearHistory removes history without changing active notifications", () =>
   assert.equal(projection.active.length, 1);
   assert.equal(projection.active[0].subjectKey, "test:engine");
   assert.equal(projection.sequence, 5);
+});
+
+test("OpenCPN projection exposes active alerts before recent messages", () => {
+  const state = createBrokerState();
+  applyEnvelope(
+    state,
+    envelope({
+      eventId: "voyage-start",
+      lifecycle: "event",
+      history: { policy: "always" },
+      priority: { level: "information", score: 100 },
+      presentation: {
+        title: "Capture",
+        label: "start",
+        message: "Voyage recording started.",
+        category: "voyage-capture",
+      },
+    }),
+  );
+  applyEnvelope(
+    state,
+    envelope({
+      eventId: "collision-1",
+      subjectKey: "traffic:235900005",
+      priority: { level: "danger", score: 900 },
+      presentation: {
+        title: "HARBOUR TUG",
+        label: "Collision alarm",
+        message: "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+        category: "collision",
+      },
+      context: { mmsi: "235900005" },
+    }),
+  );
+
+  const projection = openCpnMessagesProjection(state);
+  assert.equal(projection.contract, "ajrm-marine-opencpn-messages");
+  assert.equal(projection.messages.length, 2);
+  assert.equal(
+    projection.messages[0].message,
+    "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+  );
+  assert.equal(projection.messages[0].severity, "danger");
+  assert.equal(projection.messages[0].source, "active-alert");
+  assert.equal(projection.messages[0].mmsi, "235900005");
+  assert.equal(projection.messages[1].message, "Voyage recording started.");
+  assert.equal(projection.panelEvents.entries[0].message, projection.messages[0].message);
+  assert.equal(projection.announcementLog.entries.length, 2);
+});
+
+test("OpenCPN projection removes duplicate message text", () => {
+  const state = createBrokerState();
+  applyEnvelope(
+    state,
+    envelope({
+      eventId: "depth-active",
+      subjectKey: "depth",
+      presentation: {
+        title: "Depth",
+        label: "Warning",
+        message: "Depth is low.",
+        category: "depth",
+      },
+    }),
+  );
+  applyEnvelope(
+    state,
+    envelope({
+      eventId: "depth-event",
+      lifecycle: "event",
+      history: { policy: "always" },
+      presentation: {
+        title: "Depth",
+        label: "Warning",
+        message: "Depth is low.",
+        category: "depth",
+      },
+    }),
+  );
+
+  assert.deepEqual(
+    openCpnMessagesProjection(state).messages.map((entry) => entry.message),
+    ["Depth is low."],
+  );
 });

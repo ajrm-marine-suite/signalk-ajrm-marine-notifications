@@ -230,6 +230,89 @@ function brokerProjection(state, { historyLimit = 100, now = Date.now() } = {}) 
   };
 }
 
+function openCpnMessagesProjection(
+  state,
+  { historyLimit = 100, maxMessages = 12, now = Date.now() } = {},
+) {
+  const projection = brokerProjection(state, { historyLimit, now });
+  const activeMessages = projection.active.map((entry, index) =>
+    openCpnMessage(entry, {
+      index,
+      active: true,
+      source: "active-alert",
+    }),
+  );
+  const recentMessages = projection.recentActivity.map((entry, index) =>
+    openCpnMessage(entry, {
+      index,
+      active: false,
+      source: "recent-message",
+    }),
+  );
+  const messages = uniqueMessages([...activeMessages, ...recentMessages])
+    .slice(0, maxMessages);
+  return {
+    contract: "ajrm-marine-opencpn-messages",
+    contractVersion: 1,
+    sessionId: projection.sessionId,
+    sequence: projection.sequence,
+    serverTime: projection.serverTime,
+    messages,
+    panelEvents: {
+      serverTime: projection.serverTime,
+      entries: messages.slice(0, 3),
+      summary: {
+        count: messages.slice(0, 3).length,
+        hasActiveAlerts: activeMessages.length > 0,
+        hasOnlyInfoMessages: messages.every((entry) => entry.severity === "info"),
+      },
+    },
+    announcementLog: {
+      entries: messages,
+      summary: {
+        count: messages.length,
+        returned: messages.length,
+        truncated: activeMessages.length + recentMessages.length > messages.length,
+      },
+    },
+    updatedAt: projection.updatedAt,
+  };
+}
+
+function openCpnMessage(entry, { index = 0, active = false, source = "" } = {}) {
+  const level = String(entry?.priority?.level || entry?.state || "").toLowerCase();
+  return {
+    id: String(entry?.eventId || entry?.subjectKey || `${source}-${index}`),
+    message: String(entry?.presentation?.message || ""),
+    category: String(entry?.presentation?.category || entry?.context?.sourcePath || ""),
+    severity:
+      level === "danger" || level === "emergency" || level === "alarm"
+        ? "danger"
+        : level === "warning" || level === "warn"
+          ? "warning"
+          : "info",
+    state: String(entry?.priority?.level || entry?.state || ""),
+    source,
+    ts: entry?.timestamp || "",
+    active,
+    title: String(entry?.presentation?.title || ""),
+    label: String(entry?.presentation?.label || ""),
+    mmsi: entry?.context?.mmsi ? String(entry.context.mmsi) : "",
+  };
+}
+
+function uniqueMessages(entries) {
+  const seen = new Set();
+  return entries.filter((entry) => {
+    const message = String(entry?.message || "").trim();
+    if (!message) return false;
+    const key = message.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function audioDeliveryProjection(state, audioEvent, { now = Date.now() } = {}) {
   if (!audioEvent) return null;
   return {
@@ -403,5 +486,6 @@ module.exports = {
   compareRecentEnvelopes,
   createBrokerState,
   expireActive,
+  openCpnMessagesProjection,
   serializableState,
 };

@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Notifications Plus API",
-    "version": "0.5.5",
+    "version": "0.5.6",
     "description": "Read-only broker projection for standard Signal K notifications with separate one-shot audio delivery events."
   },
   "servers": [
@@ -68,6 +68,49 @@
                     "updatedAt": {
                       "type": "string",
                       "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openCpnMessages": {
+      "get": {
+        "summary": "Get the compact OpenCPN message projection",
+        "responses": {
+          "200": {
+            "description": "Current OpenCPN message projection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "contract": {
+                      "type": "string",
+                      "enum": [
+                        "ajrm-marine-opencpn-messages"
+                      ]
+                    },
+                    "contractVersion": {
+                      "type": "integer",
+                      "enum": [
+                        1
+                      ]
+                    },
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "panelEvents": {
+                      "type": "object"
+                    },
+                    "announcementLog": {
+                      "type": "object"
                     }
                   }
                 }
