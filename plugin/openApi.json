@@ -102,15 +102,18 @@
                     },
                     "messages": {
                       "type": "array",
+                      "description": "Compact newest-first current message view. May include active alerts.",
                       "items": {
                         "type": "object"
                       }
                     },
                     "panelEvents": {
-                      "type": "object"
+                      "type": "object",
+                      "description": "Top few entries from the compact current message view."
                     },
                     "announcementLog": {
-                      "type": "object"
+                      "type": "object",
+                      "description": "Recent announcement/event log only, excluding changing active alert panel rows."
                     }
                   }
                 }

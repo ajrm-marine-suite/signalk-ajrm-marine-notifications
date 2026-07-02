@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.9
+
+- Keep the OpenCPN `announcementLog` as an announcement/event log only, so
+  OpenCPN message panes do not show constantly recalculated active CPA panel
+  rows as if they were new announcements.
+- Increase the OpenCPN projection retention to 100 messages while leaving
+  compact panel consumers free to show only the top few rows.
+
 ## 0.5.8
 
 - Subscribe to deeper notification paths so dynamic provider leaves such as

@@ -232,7 +232,7 @@ function brokerProjection(state, { historyLimit = 100, now = Date.now() } = {}) 
 
 function openCpnMessagesProjection(
   state,
-  { historyLimit = 100, maxMessages = 12, now = Date.now() } = {},
+  { historyLimit = 100, maxMessages = 100, now = Date.now() } = {},
 ) {
   const projection = brokerProjection(state, { historyLimit, now });
   const activeMessages = projection.active.map((entry, index) =>
@@ -252,6 +252,9 @@ function openCpnMessagesProjection(
   const messages = uniqueMessages([...activeMessages, ...recentMessages])
     .sort(compareOpenCpnMessages)
     .slice(0, maxMessages);
+  const announcementMessages = uniqueMessages(recentMessages)
+    .sort(compareOpenCpnMessages)
+    .slice(0, maxMessages);
   return {
     contract: "ajrm-marine-opencpn-messages",
     contractVersion: 1,
@@ -269,11 +272,11 @@ function openCpnMessagesProjection(
       },
     },
     announcementLog: {
-      entries: messages,
+      entries: announcementMessages,
       summary: {
-        count: messages.length,
-        returned: messages.length,
-        truncated: activeMessages.length + recentMessages.length > messages.length,
+        count: recentMessages.length,
+        returned: announcementMessages.length,
+        truncated: recentMessages.length > announcementMessages.length,
       },
     },
     updatedAt: projection.updatedAt,

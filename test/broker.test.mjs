@@ -494,7 +494,10 @@ test("OpenCPN projection exposes newest messages first", () => {
   assert.equal(projection.messages[0].mmsi, "235900005");
   assert.equal(projection.messages[1].message, "Voyage recording started.");
   assert.equal(projection.panelEvents.entries[0].message, projection.messages[0].message);
-  assert.equal(projection.announcementLog.entries.length, 2);
+  assert.deepEqual(
+    projection.announcementLog.entries.map((entry) => entry.message),
+    ["Voyage recording started."],
+  );
 });
 
 test("OpenCPN projection orders newer recent messages above older active alerts", () => {
@@ -534,6 +537,51 @@ test("OpenCPN projection orders newer recent messages above older active alerts"
   assert.deepEqual(
     openCpnMessagesProjection(state).messages.map((entry) => entry.message),
     ["GPS received.", "Collision alarm."],
+  );
+});
+
+test("OpenCPN announcement log excludes changing active alert panel entries", () => {
+  const state = createBrokerState();
+  applyEnvelope(
+    state,
+    envelope({
+      eventId: "active-collision",
+      subjectKey: "traffic:235900005",
+      timestamp: "2026-06-18T18:00:00.000Z",
+      priority: { level: "danger", score: 900 },
+      presentation: {
+        title: "HARBOUR TUG",
+        label: "Collision alarm",
+        message: "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+        category: "collision",
+      },
+    }),
+  );
+  applyEnvelope(
+    state,
+    envelope({
+      eventId: "voyage-start",
+      lifecycle: "event",
+      timestamp: "2026-06-18T18:05:00.000Z",
+      history: { policy: "always" },
+      priority: { level: "information", score: 100 },
+      presentation: {
+        title: "Capture",
+        label: "start",
+        message: "Voyage recording started.",
+        category: "voyage-capture",
+      },
+    }),
+  );
+
+  const projection = openCpnMessagesProjection(state);
+  assert.deepEqual(
+    projection.messages.map((entry) => entry.message),
+    ["Voyage recording started.", "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock."],
+  );
+  assert.deepEqual(
+    projection.announcementLog.entries.map((entry) => entry.message),
+    ["Voyage recording started."],
   );
 });
 

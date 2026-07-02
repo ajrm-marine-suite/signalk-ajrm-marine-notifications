@@ -16,6 +16,12 @@ message appears at the top of compact OpenCPN panels.
 such as AJRM Marine Capture voyage-start events are included in broker
 projections.
 
+`v0.5.9` keeps the OpenCPN `announcementLog` as an event log only, while the
+top-level `messages` and `panelEvents` fields remain available for compact
+current-message panels. This lets OpenCPN terminal-style message panes match
+the announcement/audio stream instead of following constantly recalculated CPA
+panel rows.
+
 `v0.5.0` updates the diagnostics page to match the split stream model: the
 status page shows broker state and audio sequence count, while actual audio
 delivery remains a one-shot Signal K event at `plugins.ajrmMarineNotifications.audio`.
@@ -124,10 +130,10 @@ The same data is available over HTTP at:
 /plugins/signalk-ajrm-marine-notifications/openCpnMessages
 ```
 
-This projection is intentionally small and display-oriented: messages are
-listed newest-first, duplicate message text is removed, and the
-payload includes a `messages` array plus `panelEvents` and `announcementLog`
-compatibility views.
+This projection is intentionally small and display-oriented. The top-level
+`messages` array and `panelEvents` view are listed newest-first and may include
+current active alerts. The `announcementLog` view is an event log of recent
+announcements only, suitable for terminal-style displays such as OpenCPN.
 
 Provider `providerSessionId`, `sourceSequence`, and `correlationId` fields are
 preserved end to end. For legacy notifications without a correlation ID, the
@@ -147,7 +153,7 @@ This software is an Alpha Release and must not be relied upon for navigation or 
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.8 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.9 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
