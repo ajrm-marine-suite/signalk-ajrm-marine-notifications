@@ -90,6 +90,9 @@ module.exports = function ajrmMarineNotifications(app) {
         subscribe: [
           { path: "notifications", policy: "instant", format: "delta" },
           { path: "notifications.*", policy: "instant", format: "delta" },
+          { path: "notifications.*.*", policy: "instant", format: "delta" },
+          { path: "notifications.*.*.*", policy: "instant", format: "delta" },
+          { path: "notifications.*.*.*.*", policy: "instant", format: "delta" },
         ],
       },
       unsubscribes,

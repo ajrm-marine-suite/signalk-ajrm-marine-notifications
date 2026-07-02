@@ -75,3 +75,68 @@ test("plugin publishes OpenCPN messages projection on its Signal K path", () => 
   );
   assert.equal(openCpnValue.messages[0].severity, "danger");
 });
+
+test("plugin includes deep AJRM Marine Capture voyage-start notifications in OpenCPN messages", () => {
+  const harness = createApp();
+  const plugin = createPlugin(harness.app);
+  plugin.start({ historyLimit: 20 });
+
+  harness.emit({
+    updates: [
+      {
+        values: [
+          {
+            path: "notifications.plugins.ajrmMarineCapture.voyage20260702.start",
+            value: {
+              state: "alert",
+              method: ["visual", "sound"],
+              message: "Voyage recording started.",
+              data: {
+                ajrmMarineNotifications: {
+                  schemaVersion: 1,
+                  provider: "ajrm-marine-capture",
+                  subjectKey: "ajrm-marine-capture:voyage20260702:start",
+                  eventId: "capture-start-1",
+                  revision: 1,
+                  lifecycle: "event",
+                  timestamp: "2026-07-02T10:00:00.000Z",
+                  priority: { level: "information", score: 100 },
+                  supersedes: [],
+                  history: { policy: "always" },
+                  delivery: {
+                    visual: true,
+                    audio: true,
+                    preempt: false,
+                    expiresSeconds: 45,
+                  },
+                  presentation: {
+                    title: "AJRM Marine Capture",
+                    label: "start",
+                    message: "Voyage recording started.",
+                    category: "voyage-capture",
+                  },
+                  actions: [],
+                  context: { voyageId: "voyage20260702" },
+                },
+              },
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  const openCpnValue = harness.published
+    .flatMap(valuesFrom)
+    .map((entry) =>
+      entry.path === "plugins.ajrmMarineNotifications.openCpnMessages"
+        ? entry.value
+        : null,
+    )
+    .filter(Boolean)
+    .find((value) => value.messages.some((message) => message.message === "Voyage recording started."));
+
+  assert.ok(openCpnValue);
+  assert.equal(openCpnValue.messages[0].message, "Voyage recording started.");
+  assert.equal(openCpnValue.messages[0].category, "voyage-capture");
+});

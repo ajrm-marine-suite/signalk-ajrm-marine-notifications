@@ -572,3 +572,40 @@ test("OpenCPN projection removes duplicate message text", () => {
     ["Depth is low."],
   );
 });
+
+test("OpenCPN projection includes voyage capture information events", () => {
+  const state = createBrokerState();
+  applyEnvelope(
+    state,
+    envelope({
+      provider: "ajrm-marine-capture",
+      subjectKey: "ajrm-marine-capture:voyage20260702:start",
+      eventId: "capture-start-1",
+      lifecycle: "event",
+      timestamp: "2026-07-02T10:00:00.000Z",
+      history: { policy: "always" },
+      priority: { level: "information", score: 100 },
+      presentation: {
+        title: "AJRM Marine Capture",
+        label: "start",
+        message: "Voyage recording started.",
+        category: "voyage-capture",
+      },
+    }),
+  );
+
+  assert.deepEqual(
+    openCpnMessagesProjection(state).messages.map((entry) => ({
+      message: entry.message,
+      category: entry.category,
+      severity: entry.severity,
+    })),
+    [
+      {
+        message: "Voyage recording started.",
+        category: "voyage-capture",
+        severity: "info",
+      },
+    ],
+  );
+});

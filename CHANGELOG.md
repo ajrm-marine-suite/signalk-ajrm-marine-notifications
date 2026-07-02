@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.8
+
+- Subscribe to deeper notification paths so dynamic provider leaves such as
+  AJRM Marine Capture voyage-start events reach broker projections.
+
 ## 0.5.7
 
 - Order the OpenCPN message projection newest-first.

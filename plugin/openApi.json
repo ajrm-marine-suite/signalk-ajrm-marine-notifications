@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Notifications Plus API",
-    "version": "0.5.7",
+    "version": "0.5.8",
     "description": "Read-only broker projection for standard Signal K notifications with separate one-shot audio delivery events."
   },
   "servers": [

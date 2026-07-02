@@ -12,6 +12,10 @@ same shape at `/plugins/signalk-ajrm-marine-notifications/openCpnMessages`.
 `v0.5.7` orders the OpenCPN message projection newest-first so the latest
 message appears at the top of compact OpenCPN panels.
 
+`v0.5.8` subscribes to deeper notification paths so dynamic provider leaves
+such as AJRM Marine Capture voyage-start events are included in broker
+projections.
+
 `v0.5.0` updates the diagnostics page to match the split stream model: the
 status page shows broker state and audio sequence count, while actual audio
 delivery remains a one-shot Signal K event at `plugins.ajrmMarineNotifications.audio`.
@@ -143,7 +147,7 @@ This software is an Alpha Release and must not be relied upon for navigation or 
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.7 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.8 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
