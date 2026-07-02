@@ -447,13 +447,14 @@ test("clearHistory removes history without changing active notifications", () =>
   assert.equal(projection.sequence, 5);
 });
 
-test("OpenCPN projection exposes active alerts before recent messages", () => {
+test("OpenCPN projection exposes newest messages first", () => {
   const state = createBrokerState();
   applyEnvelope(
     state,
     envelope({
       eventId: "voyage-start",
       lifecycle: "event",
+      timestamp: "2026-06-18T18:00:00.000Z",
       history: { policy: "always" },
       priority: { level: "information", score: 100 },
       presentation: {
@@ -469,6 +470,7 @@ test("OpenCPN projection exposes active alerts before recent messages", () => {
     envelope({
       eventId: "collision-1",
       subjectKey: "traffic:235900005",
+      timestamp: "2026-06-18T18:05:00.000Z",
       priority: { level: "danger", score: 900 },
       presentation: {
         title: "HARBOUR TUG",
@@ -493,6 +495,46 @@ test("OpenCPN projection exposes active alerts before recent messages", () => {
   assert.equal(projection.messages[1].message, "Voyage recording started.");
   assert.equal(projection.panelEvents.entries[0].message, projection.messages[0].message);
   assert.equal(projection.announcementLog.entries.length, 2);
+});
+
+test("OpenCPN projection orders newer recent messages above older active alerts", () => {
+  const state = createBrokerState();
+  applyEnvelope(
+    state,
+    envelope({
+      eventId: "older-active",
+      subjectKey: "traffic:235900005",
+      timestamp: "2026-06-18T18:00:00.000Z",
+      priority: { level: "danger", score: 900 },
+      presentation: {
+        title: "HARBOUR TUG",
+        label: "Collision alarm",
+        message: "Collision alarm.",
+        category: "collision",
+      },
+    }),
+  );
+  applyEnvelope(
+    state,
+    envelope({
+      eventId: "newer-event",
+      lifecycle: "event",
+      timestamp: "2026-06-18T18:10:00.000Z",
+      history: { policy: "always" },
+      priority: { level: "information", score: 100 },
+      presentation: {
+        title: "GPS",
+        label: "received",
+        message: "GPS received.",
+        category: "gps",
+      },
+    }),
+  );
+
+  assert.deepEqual(
+    openCpnMessagesProjection(state).messages.map((entry) => entry.message),
+    ["GPS received.", "Collision alarm."],
+  );
 });
 
 test("OpenCPN projection removes duplicate message text", () => {

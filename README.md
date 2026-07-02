@@ -9,6 +9,9 @@ to Audio as the spoken request text when present.
 `vessels.self.plugins.ajrmMarineNotifications.openCpnMessages` and serves the
 same shape at `/plugins/signalk-ajrm-marine-notifications/openCpnMessages`.
 
+`v0.5.7` orders the OpenCPN message projection newest-first so the latest
+message appears at the top of compact OpenCPN panels.
+
 `v0.5.0` updates the diagnostics page to match the split stream model: the
 status page shows broker state and audio sequence count, while actual audio
 delivery remains a one-shot Signal K event at `plugins.ajrmMarineNotifications.audio`.
@@ -117,8 +120,8 @@ The same data is available over HTTP at:
 /plugins/signalk-ajrm-marine-notifications/openCpnMessages
 ```
 
-This projection is intentionally small and display-oriented: active alerts are
-listed before recent messages, duplicate message text is removed, and the
+This projection is intentionally small and display-oriented: messages are
+listed newest-first, duplicate message text is removed, and the
 payload includes a `messages` array plus `panelEvents` and `announcementLog`
 compatibility views.
 
@@ -140,7 +143,7 @@ This software is an Alpha Release and must not be relied upon for navigation or 
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.6 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.7 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

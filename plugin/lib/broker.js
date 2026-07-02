@@ -250,6 +250,7 @@ function openCpnMessagesProjection(
     }),
   );
   const messages = uniqueMessages([...activeMessages, ...recentMessages])
+    .sort(compareOpenCpnMessages)
     .slice(0, maxMessages);
   return {
     contract: "ajrm-marine-opencpn-messages",
@@ -311,6 +312,17 @@ function uniqueMessages(entries) {
     seen.add(key);
     return true;
   });
+}
+
+function compareOpenCpnMessages(left, right) {
+  const leftTime = Date.parse(left?.ts || "");
+  const rightTime = Date.parse(right?.ts || "");
+  if (Number.isFinite(leftTime) && Number.isFinite(rightTime)) {
+    return rightTime - leftTime;
+  }
+  if (Number.isFinite(leftTime)) return -1;
+  if (Number.isFinite(rightTime)) return 1;
+  return 0;
 }
 
 function audioDeliveryProjection(state, audioEvent, { now = Date.now() } = {}) {

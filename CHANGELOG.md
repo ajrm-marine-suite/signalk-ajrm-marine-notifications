@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.7
+
+- Order the OpenCPN message projection newest-first.
+
 ## 0.5.6
 
 - Publish a compact OpenCPN message projection at
