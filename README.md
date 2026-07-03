@@ -153,7 +153,7 @@ This software is an Alpha Release and must not be relied upon for navigation or 
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.10 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.11 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
