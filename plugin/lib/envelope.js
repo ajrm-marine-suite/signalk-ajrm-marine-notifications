@@ -51,6 +51,7 @@ function normalizeEnvelope(raw, { now = Date.now() } = {}) {
       visual: raw.delivery?.visual !== false,
       audio: raw.delivery?.audio === true,
       preempt: raw.delivery?.preempt !== false,
+      retainUntilDelivered: raw.delivery?.retainUntilDelivered === true,
       localPlayback: raw.delivery?.localPlayback !== false,
       streamOutput: raw.delivery?.streamOutput !== false,
       muteState:

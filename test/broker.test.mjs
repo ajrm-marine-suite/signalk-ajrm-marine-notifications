@@ -126,6 +126,27 @@ test("provider pre-emption policy survives broker normalization", () => {
   assert.equal(result.audioEvent.delivery.preempt, false);
 });
 
+test("provider retain-until-delivered policy survives broker normalization", () => {
+  const state = createBrokerState();
+  const result = applyEnvelope(
+    state,
+    envelope({
+      eventId: "event-retained-audio",
+      lifecycle: "event",
+      delivery: {
+        visual: true,
+        audio: true,
+        retainUntilDelivered: true,
+        expiresSeconds: 90,
+      },
+    }),
+  );
+
+  const audio = audioDeliveryProjection(state, result.audioEvent);
+  assert.equal(result.audioEvent.delivery.retainUntilDelivered, true);
+  assert.equal(audio.audioRequest.retainUntilDelivered, true);
+});
+
 test("resolved subjects move to history according to provider policy", () => {
   const state = createBrokerState();
   applyEnvelope(state, envelope());

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1
+
+- Preserve the provider-owned `delivery.retainUntilDelivered` flag through
+  normalized envelopes and one-shot Audio delivery requests.
+- Document that retained queued audio remains subject to its provider-defined
+  expiry.
+
 ## 0.5.9
 
 - Keep the OpenCPN `announcementLog` as an announcement/event log only, so

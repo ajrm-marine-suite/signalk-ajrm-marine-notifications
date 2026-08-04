@@ -88,6 +88,8 @@ The broker owns generic mechanics only:
 - Provider-selected history policy.
 - Visual and audio delivery projections.
 - Expiry, deduplication, and in-session history.
+- Provider-requested retention of safety-critical queued audio until delivery or
+  expiry, even when a newer state for the same subject arrives.
 - A broker-owned clear-history operation that leaves active notifications untouched.
 
 It does not inspect message wording, categories, MMSIs, or provider-specific states to decide meaning. A standard Signal K `null` clear resolves the subject previously associated with that notification path.
@@ -171,4 +173,3 @@ Development assistance: OpenAI Codex helped with code generation, refactoring, a
 This software is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). You may use, study, share, and modify it under that licence. If you modify it and make it available to users over a network, the corresponding source code must also be made available under the AGPL.
 
 Commercial licensing is available by arrangement for organisations that want different terms.
-

@@ -382,6 +382,7 @@ function audioRequest(state, envelope) {
     message: envelope.presentation.audioMessage || envelope.presentation.message,
     priorityScore: envelope.priority.score,
     preempt: envelope.delivery.preempt,
+    retainUntilDelivered: envelope.delivery.retainUntilDelivered,
     expiresAt: envelope.audioExpiresAt || envelope.expiresAt || null,
     outputs: {
       localSpeaker: envelope.delivery.localPlayback,
