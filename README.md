@@ -1,6 +1,12 @@
 # AJRM Marine Notifications
 
-## Version 1 baseline
+## Current release
+
+Version `0.6.2` is the current provider-neutral broker. Providers publish
+ordinary Signal K notifications; Notifications adds shared lifecycle,
+priority, recent-activity, OpenCPN-message, and one-shot Audio projections.
+
+## Release history
 
 `v0.5.1` preserves provider-supplied `presentation.audioMessage` and forwards it
 to Audio as the spoken request text when present.
@@ -67,7 +73,7 @@ The notification retains the standard `state`, `method`, and `message` fields.
 The optional richer envelope is carried at `data.ajrmMarineNotifications`.
 
 Standard Signal K clients can therefore consume the notification without knowing
-about Notifications Plus:
+about AJRM Marine Notifications:
 
 - States remain `normal`, `alert`, `warn`, `alarm`, or `emergency`.
 - Methods remain `visual` and/or `sound`.
@@ -75,7 +81,7 @@ about Notifications Plus:
 - Monitored values use a notification path mirroring the source path where practical.
 - Well-known branches such as `notifications.collision` remain well-known.
 
-Notifications Plus also accepts standard Signal K notifications that do not
+AJRM Marine Notifications also accepts standard Signal K notifications that do not
 contain the extension. It derives only generic state/method/path behavior and
 does not attempt provider-specific interpretation.
 
@@ -96,7 +102,7 @@ It does not inspect message wording, categories, MMSIs, or provider-specific sta
 Compatibility mirrors can explicitly opt out of brokering with
 `data.ajrmMarineNotifications.broker: false`; this decision belongs to the provider.
 
-Broker state is deliberately runtime-only. Restarting Notifications Plus or
+Broker state is deliberately runtime-only. Restarting AJRM Marine Notifications or
 Signal K clears active, historical, and audio-delivery state. Providers can
 republish conditions that are still genuinely active after startup.
 
@@ -146,7 +152,7 @@ Delivery policy includes provider-authored `preempt`. When false, audio consumer
 
 Absolute thresholds may also be represented through standard Signal K
 `meta.zones` and alarm-method metadata when the source owner controls that
-metadata. Notifications Plus does not overwrite sensor metadata. Rate-of-change,
+metadata. AJRM Marine Notifications does not overwrite sensor metadata. Rate-of-change,
 supersession, history, actions, and delivery freshness remain extension features.
 
 This software is an Alpha Release and must not be relied upon for navigation or safety.
@@ -155,12 +161,12 @@ This software is an Alpha Release and must not be relied upon for navigation or 
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.5.11 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.6.2 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
-Enable AJRM Marine Notifications before enhanced consumers such as AJRM Marine
-Companion and AJRM Marine Audio.
+Enable AJRM Marine Notifications before AJRM Marine Audio and enhanced clients
+that consume broker projections.
 
 
 ## Public Beta

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.2
+
+- Refresh naming, architecture, and installation guidance for the current
+  provider-neutral notification broker.
+
 ## 0.6.1
 
 - Preserve the provider-owned `delivery.retainUntilDelivered` flag through
