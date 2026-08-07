@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.0
+
+- Expire active broker entries at their deadline even when no new Signal K
+  notification or HTTP request arrives.
+- Process nested `null` leaves in whole-tree `notifications` deltas as standard
+  Signal K clears.
+- Reject stale active and resolved envelopes before applying supersession,
+  source-path remapping or audio delivery.
+- Make repeated `start()` calls release old subscriptions and make `stop()`
+  clear both subscriptions and the expiry timer.
+- Remove unused saved-state serialization scaffolding and obsolete standalone
+  Alert Panel compatibility guidance.
+- Remove the redundant broker diagnostics webapp; Console's built-in Alerts
+  view is now the single operator-facing notification display.
+- Replace the accumulated historical README with the current authority and
+  contract boundaries.
+
 ## 0.6.2
 
 - Refresh naming, architecture, and installation guidance for the current

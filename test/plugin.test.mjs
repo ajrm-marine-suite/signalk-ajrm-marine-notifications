@@ -4,15 +4,15 @@ import createPlugin from "../plugin/index.js";
 
 function createApp() {
   const published = [];
-  let handler = null;
+  const handlers = new Set();
   return {
     published,
     app: {
       subscriptionmanager: {
         subscribe(_subscription, unsubscribes, _onError, callback) {
-          handler = callback;
+          handlers.add(callback);
           unsubscribes.push(() => {
-            handler = null;
+            handlers.delete(callback);
           });
         },
       },
@@ -25,8 +25,11 @@ function createApp() {
       },
     },
     emit(delta) {
-      assert.ok(handler, "subscription handler is registered");
-      handler(delta);
+      assert.ok(handlers.size, "subscription handler is registered");
+      for (const handler of handlers) handler(delta);
+    },
+    subscriberCount() {
+      return handlers.size;
     },
   };
 }
@@ -139,4 +142,83 @@ test("plugin includes deep AJRM Marine Capture voyage-start notifications in Ope
   assert.ok(openCpnValue);
   assert.equal(openCpnValue.messages[0].message, "Voyage recording started.");
   assert.equal(openCpnValue.messages[0].category, "voyage-capture");
+});
+
+test("plugin resolves a nested notification cleared in a whole-tree delta", () => {
+  const harness = createApp();
+  const plugin = createPlugin(harness.app);
+  plugin.start({ historyLimit: 20 });
+  harness.emit({
+    updates: [{ values: [{
+      path: "notifications.navigation.depthBelowKeel",
+      value: { state: "alarm", method: ["visual"], message: "Depth alarm." },
+    }] }],
+  });
+
+  harness.emit({
+    updates: [{ values: [{
+      path: "notifications",
+      value: { navigation: { depthBelowKeel: null } },
+    }] }],
+  });
+
+  const latest = harness.published.at(-1);
+  const projection = valuesFrom(latest).find(
+    (entry) => entry.path === "plugins.ajrmMarineNotifications",
+  ).value;
+  assert.equal(projection.active.length, 0);
+  assert.equal(projection.recentActivity.length, 1);
+  plugin.stop();
+});
+
+test("plugin publishes expiry without waiting for another notification", async () => {
+  const harness = createApp();
+  const plugin = createPlugin(harness.app);
+  plugin.start({ historyLimit: 20 });
+  harness.emit({
+    updates: [{ values: [{
+      path: "notifications.test.shortLived",
+      value: {
+        state: "alert",
+        method: ["visual"],
+        message: "Short-lived alert.",
+        data: {
+          ajrmMarineNotifications: {
+            schemaVersion: 1,
+            provider: "test-provider",
+            subjectKey: "test:short-lived",
+            eventId: "short-lived-1",
+            revision: 1,
+            lifecycle: "active",
+            timestamp: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 30).toISOString(),
+            priority: { level: "information", score: 200 },
+            history: { policy: "on-resolve" },
+            delivery: { visual: true, audio: false },
+            presentation: { message: "Short-lived alert." },
+          },
+        },
+      },
+    }] }],
+  });
+
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  const projections = harness.published
+    .flatMap(valuesFrom)
+    .filter((entry) => entry.path === "plugins.ajrmMarineNotifications")
+    .map((entry) => entry.value);
+  assert.equal(projections.at(-1).active.length, 0);
+  assert.equal(projections.at(-1).recentActivity.length, 1);
+  plugin.stop();
+});
+
+test("restarting and stopping the plugin clean up subscriptions", () => {
+  const harness = createApp();
+  const plugin = createPlugin(harness.app);
+  plugin.start({});
+  assert.equal(harness.subscriberCount(), 1);
+  plugin.start({});
+  assert.equal(harness.subscriberCount(), 1);
+  plugin.stop();
+  assert.equal(harness.subscriberCount(), 0);
 });

@@ -22,6 +22,8 @@ module.exports = function ajrmMarineNotifications(app) {
   let options = normalizeOptions({});
   let state = createBrokerState();
   let unsubscribes = [];
+  let expiryTimer = null;
+  let running = false;
 
   plugin.id = PLUGIN_ID;
   plugin.name = "AJRM Marine Notifications";
@@ -42,6 +44,9 @@ module.exports = function ajrmMarineNotifications(app) {
   };
 
   plugin.start = (pluginOptions = {}) => {
+    stopSubscriptions();
+    stopExpiryTimer();
+    running = true;
     options = normalizeOptions(pluginOptions);
     state = createBrokerState();
     subscribe();
@@ -50,6 +55,12 @@ module.exports = function ajrmMarineNotifications(app) {
   };
 
   plugin.stop = () => {
+    running = false;
+    stopExpiryTimer();
+    stopSubscriptions();
+  };
+
+  function stopSubscriptions() {
     for (const unsubscribe of unsubscribes) {
       try {
         unsubscribe();
@@ -58,7 +69,7 @@ module.exports = function ajrmMarineNotifications(app) {
       }
     }
     unsubscribes = [];
-  };
+  }
 
   plugin.registerWithRouter = (router) => {
     router.get("/status", (_req, res) => {
@@ -154,6 +165,28 @@ module.exports = function ajrmMarineNotifications(app) {
         },
       ],
     });
+    scheduleNextExpiry();
+  }
+
+  function scheduleNextExpiry() {
+    stopExpiryTimer();
+    if (!running) return;
+    const nextExpiry = [...state.active.values()]
+      .map((envelope) => Date.parse(envelope.expiresAt || ""))
+      .filter(Number.isFinite)
+      .sort((left, right) => left - right)[0];
+    if (!Number.isFinite(nextExpiry)) return;
+    const delayMs = Math.min(2_147_483_647, Math.max(0, nextExpiry - Date.now() + 10));
+    expiryTimer = setTimeout(() => {
+      expiryTimer = null;
+      if (running) publish();
+    }, delayMs);
+    expiryTimer.unref?.();
+  }
+
+  function stopExpiryTimer() {
+    if (expiryTimer) clearTimeout(expiryTimer);
+    expiryTimer = null;
   }
 
   function publishAudio(audioEvent) {
@@ -178,7 +211,8 @@ function normalizeOptions(value) {
 }
 
 function flattenNotificationTree(value, prefix = "notifications") {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  if (value === null) return [[prefix, null]];
+  if (typeof value !== "object" || Array.isArray(value)) return [];
   if (
     Object.hasOwn(value, "state") ||
     Object.hasOwn(value, "method") ||

@@ -1,14 +1,13 @@
 {
   "name": "signalk-ajrm-marine-notifications",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "Priority notification broker for AJRM Marine Suite apps.",
   "main": "plugin/index.js",
   "scripts": {
-    "test": "node --test \"test/**/*.test.mjs\" && node --check plugin/index.js && node --check public/app.js"
+    "test": "node --test \"test/**/*.test.mjs\" && node --check plugin/index.js"
   },
   "keywords": [
     "signalk-node-server-plugin",
-    "signalk-webapp",
     "signalk-category-notifications",
     "notifications",
     "alerts",
@@ -33,13 +32,11 @@
   },
   "files": [
     "plugin",
-    "public",
     "README.md",
     "LICENSE"
   ],
   "signalk-plugin-enabled-by-default": true,
   "signalk": {
-    "displayName": "AJRM Marine Notifications",
-    "appIcon": "./icon.svg"
+    "displayName": "AJRM Marine Notifications"
   }
 }

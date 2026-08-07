@@ -3,32 +3,15 @@
 const { randomUUID } = require("node:crypto");
 const { normalizeEnvelope } = require("./envelope");
 
-function createBrokerState(saved = {}) {
+function createBrokerState() {
   return {
     sessionId: randomUUID(),
     sequence: 1,
-    active: new Map(
-      (Array.isArray(saved.active) ? saved.active : [])
-        .map((entry) => normalizeEnvelope(entry))
-        .filter(Boolean)
-        .map((entry) => [entry.subjectKey, entry]),
-    ),
-    history: (Array.isArray(saved.history) ? saved.history : [])
-      .map((entry) => normalizeEnvelope(entry))
-      .filter(Boolean),
-    audioSequence: Number(saved.audioSequence) || 0,
-    deliveredEventIds: new Set(
-      (Array.isArray(saved.deliveredEventIds) ? saved.deliveredEventIds : [])
-        .map((id) => String(id || "").trim())
-        .filter(Boolean),
-    ),
-    sourceSubjects: new Map(
-      Object.entries(
-        saved.sourceSubjects && typeof saved.sourceSubjects === "object"
-          ? saved.sourceSubjects
-          : {},
-      ),
-    ),
+    active: new Map(),
+    history: [],
+    audioSequence: 0,
+    deliveredEventIds: new Set(),
+    sourceSubjects: new Map(),
   };
 }
 
@@ -56,9 +39,6 @@ function applySignalKNotification(
   }
 
   const providerExtension = notificationValue?.data?.ajrmMarineNotifications;
-  if (providerExtension?.broker === false) {
-    return { changed: false, audioEvent: null, envelope: null };
-  }
   const stateValue = String(notificationValue?.state || "").toLowerCase();
   const methods = Array.isArray(notificationValue?.method)
     ? notificationValue.method
@@ -101,9 +81,10 @@ function applySignalKNotification(
   const extension =
     providerExtension || standardEnvelope(sourcePath, notificationValue, now);
   const result = applyEnvelope(state, extension, { historyLimit, now });
-  if (result.envelope?.lifecycle === "active") {
+  if (result.accepted && result.envelope?.lifecycle === "active") {
     state.sourceSubjects.set(path, result.envelope.subjectKey);
   } else if (
+    result.accepted &&
     result.envelope &&
     state.sourceSubjects.get(path) === result.envelope.subjectKey
   ) {
@@ -114,10 +95,28 @@ function applySignalKNotification(
 
 function applyEnvelope(state, rawEnvelope, { historyLimit = 100, now = Date.now() } = {}) {
   const normalized = normalizeEnvelope(rawEnvelope, { now });
-  if (!normalized) return { changed: false, audioEvent: null, envelope: null };
+  if (!normalized) {
+    return { changed: false, accepted: false, audioEvent: null, envelope: null };
+  }
   const envelope = withCorrelation(state, normalized);
 
   let changed = expireActive(state, { historyLimit, now });
+  const previous = state.active.get(envelope.subjectKey);
+  const accepted =
+    envelope.lifecycle === "active"
+      ? !previous || isNewer(envelope, previous)
+      : envelope.lifecycle === "resolved"
+        ? previous
+          ? isNewer(envelope, previous)
+          : envelope.history.policy === "always" &&
+            !state.deliveredEventIds.has(envelope.eventId)
+        : !state.deliveredEventIds.has(envelope.eventId);
+
+  if (!accepted) {
+    if (changed) advanceProjection(state);
+    return { changed, accepted: false, audioEvent: null, envelope };
+  }
+
   for (const subjectKey of envelope.supersedes) {
     changed =
       resolveSubject(state, subjectKey, {
@@ -127,11 +126,8 @@ function applyEnvelope(state, rawEnvelope, { historyLimit = 100, now = Date.now(
   }
 
   if (envelope.lifecycle === "active") {
-    const previous = state.active.get(envelope.subjectKey);
-    if (!previous || isNewer(envelope, previous)) {
-      state.active.set(envelope.subjectKey, envelope);
-      changed = true;
-    }
+    state.active.set(envelope.subjectKey, envelope);
+    changed = true;
   } else if (envelope.lifecycle === "resolved") {
     changed = resolveSubject(state, envelope.subjectKey, {
       historyLimit,
@@ -141,10 +137,8 @@ function applyEnvelope(state, rawEnvelope, { historyLimit = 100, now = Date.now(
       appendHistory(state, envelope, historyLimit);
       changed = true;
     }
+    rememberDeliveredEventId(state, envelope.eventId);
   } else {
-    if (state.deliveredEventIds.has(envelope.eventId)) {
-      return { changed, audioEvent: null, envelope };
-    }
     if (envelope.history.policy === "always") appendHistory(state, envelope, historyLimit);
     rememberDeliveredEventId(state, envelope.eventId);
     changed = true;
@@ -168,13 +162,16 @@ function applyEnvelope(state, rawEnvelope, { historyLimit = 100, now = Date.now(
   }
 
   if (changed) advanceProjection(state);
-  return { changed, audioEvent, envelope };
+  return { changed, accepted: true, audioEvent, envelope };
 }
 
 function resolveSubject(state, subjectKey, { historyLimit, resolvedAt }) {
   const previous = state.active.get(subjectKey);
   if (!previous) return false;
   state.active.delete(subjectKey);
+  for (const [sourcePath, mappedSubject] of state.sourceSubjects) {
+    if (mappedSubject === subjectKey) state.sourceSubjects.delete(sourcePath);
+  }
   if (previous.history.policy === "on-resolve" || previous.history.policy === "always") {
     appendHistory(
       state,
@@ -344,18 +341,6 @@ function audioDeliveryProjection(state, audioEvent, { now = Date.now() } = {}) {
   };
 }
 
-function serializableState(state) {
-  return {
-    sessionId: state.sessionId,
-    sequence: state.sequence,
-    active: [...state.active.values()],
-    history: state.history,
-    audioSequence: state.audioSequence,
-    deliveredEventIds: [...state.deliveredEventIds],
-    sourceSubjects: Object.fromEntries(state.sourceSubjects),
-  };
-}
-
 function clearHistory(state) {
   const cleared = state.history.length;
   state.history = [];
@@ -420,11 +405,10 @@ function compareRecentEnvelopes(left, right) {
 
 function isNewer(candidate, previous) {
   if (candidate.eventId === previous.eventId) return false;
-  return (
-    Number(candidate.revision || 0) > Number(previous.revision || 0) ||
-    (Number(candidate.revision || 0) === Number(previous.revision || 0) &&
-      candidate.eventId !== previous.eventId)
-  );
+  const candidateRevision = Number(candidate.revision || 0);
+  const previousRevision = Number(previous.revision || 0);
+  if (candidateRevision !== previousRevision) return candidateRevision > previousRevision;
+  return Date.parse(candidate.timestamp || 0) > Date.parse(previous.timestamp || 0);
 }
 
 function standardEnvelope(sourcePath, value, now) {
@@ -503,5 +487,4 @@ module.exports = {
   createBrokerState,
   expireActive,
   openCpnMessagesProjection,
-  serializableState,
 };

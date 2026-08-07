@@ -99,7 +99,7 @@ test("broker prefers provider audio message for audio requests", () => {
   assert.equal(audio.audioRequest.message, "Traffic advisory. Small craft at 1 o'clock.");
 });
 
-test("broker creates a marked correlation identifier for legacy input", () => {
+test("broker creates a marked correlation identifier for a standard notification", () => {
   const state = createBrokerState();
   applyEnvelope(state, envelope());
   const projection = brokerProjection(state);
@@ -252,6 +252,97 @@ test("duplicate active event IDs do not redeliver audio", () => {
   assert.ok(first.audioEvent);
   assert.equal(duplicate.changed, false);
   assert.equal(duplicate.audioEvent, null);
+});
+
+test("an unrelated expiry does not make a rejected stale update audible", () => {
+  const state = createBrokerState();
+  applyEnvelope(
+    state,
+    envelope({
+      subjectKey: "test:expiring",
+      eventId: "expiring-1",
+      expiresAt: "2026-06-18T18:00:01.000Z",
+      delivery: { visual: true, audio: false },
+    }),
+    { now: Date.parse("2026-06-18T18:00:00.000Z") },
+  );
+  applyEnvelope(
+    state,
+    envelope({ eventId: "depth-new", revision: 10 }),
+    { now: Date.parse("2026-06-18T18:00:00.000Z") },
+  );
+
+  const stale = applyEnvelope(
+    state,
+    envelope({ eventId: "depth-stale", revision: 2 }),
+    { now: Date.parse("2026-06-18T18:00:02.000Z") },
+  );
+
+  assert.equal(stale.changed, true, "the unrelated expiry changes the projection");
+  assert.equal(stale.accepted, false);
+  assert.equal(stale.audioEvent, null);
+  assert.equal(brokerProjection(state).active[0].eventId, "depth-new");
+});
+
+test("a stale resolved envelope cannot clear a newer active revision", () => {
+  const state = createBrokerState();
+  applyEnvelope(state, envelope({ eventId: "depth-new", revision: 10 }));
+
+  const staleClear = applyEnvelope(
+    state,
+    envelope({
+      eventId: "depth-old-clear",
+      revision: 2,
+      lifecycle: "resolved",
+      delivery: { visual: false, audio: false },
+    }),
+  );
+
+  assert.equal(staleClear.accepted, false);
+  assert.equal(brokerProjection(state).active[0].eventId, "depth-new");
+});
+
+test("a duplicate event cannot reapply supersession to a later alert", () => {
+  const state = createBrokerState();
+  const oneShot = envelope({
+    subjectKey: "test:all-clear",
+    eventId: "all-clear-1",
+    lifecycle: "event",
+    supersedes: ["test:depth"],
+    history: { policy: "always" },
+  });
+  applyEnvelope(state, envelope());
+  applyEnvelope(state, oneShot);
+  applyEnvelope(state, envelope({ eventId: "depth-2", revision: 2 }));
+
+  const duplicate = applyEnvelope(state, oneShot);
+
+  assert.equal(duplicate.accepted, false);
+  assert.equal(brokerProjection(state).active[0].eventId, "depth-2");
+});
+
+test("resolving an expiring subject releases its source-path mapping", () => {
+  const state = createBrokerState();
+  applySignalKNotification(
+    state,
+    "notifications.test.expiring",
+    {
+      state: "alert",
+      method: ["visual"],
+      message: "Expiring.",
+      data: {
+        ajrmMarineNotifications: envelope({
+          expiresAt: "2026-06-18T18:00:01.000Z",
+          delivery: { visual: true, audio: false },
+        }),
+      },
+    },
+    { now: Date.parse("2026-06-18T18:00:00.000Z") },
+  );
+
+  brokerProjection(state, { now: Date.parse("2026-06-18T18:00:02.000Z") });
+
+  assert.equal(state.sourceSubjects.size, 0);
 });
 
 test("safety: repeated Traffic collision alarms create fresh audio delivery events", () => {
@@ -508,22 +599,6 @@ test("extended one-shot events may use standard normal state", () => {
     },
   });
   assert.equal(brokerProjection(state).history[0].eventId, "gps-received-1");
-});
-
-test("provider can explicitly exclude a compatibility notification from the broker", () => {
-  const state = createBrokerState();
-  const result = applySignalKNotification(
-    state,
-    "notifications.navigation.closestApproach",
-    {
-      state: "alarm",
-      method: ["visual"],
-      message: "Legacy compatibility notification.",
-      data: { ajrmMarineNotifications: { broker: false } },
-    },
-  );
-  assert.equal(result.changed, false);
-  assert.deepEqual(brokerProjection(state).active, []);
 });
 
 test("clearHistory removes history without changing active notifications", () => {
