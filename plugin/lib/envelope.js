@@ -1,3 +1,7 @@
+/**
+ * Implements the envelope responsibilities of the AJRM Marine Notifications Signal K server.
+ */
+
 "use strict";
 
 const LIFECYCLES = new Set(["active", "resolved", "event"]);

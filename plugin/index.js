@@ -1,3 +1,7 @@
+/**
+ * Signal K server entry point for AJRM Marine Notifications; registers lifecycle, subscriptions, routes, and status.
+ */
+
 "use strict";
 
 const packageInfo = require("../package.json");

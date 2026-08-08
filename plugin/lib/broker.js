@@ -1,3 +1,7 @@
+/**
+ * Implements the broker responsibilities of the AJRM Marine Notifications Signal K server.
+ */
+
 "use strict";
 
 const { randomUUID } = require("node:crypto");
