@@ -212,6 +212,24 @@ test("plugin publishes expiry without waiting for another notification", async (
   plugin.stop();
 });
 
+test("plugin republishes the complete projection as a freshness heartbeat", async () => {
+  const harness = createApp();
+  const plugin = createPlugin(harness.app);
+  plugin.start({ heartbeatSeconds: 1 });
+  const initial = harness.published
+    .flatMap(valuesFrom)
+    .filter((entry) => entry.path === "plugins.ajrmMarineNotifications");
+
+  await new Promise((resolve) => setTimeout(resolve, 1050));
+
+  const projections = harness.published
+    .flatMap(valuesFrom)
+    .filter((entry) => entry.path === "plugins.ajrmMarineNotifications");
+  assert.ok(projections.length > initial.length);
+  assert.equal(projections.at(-1).value.contract, "notifications-plus-projection");
+  plugin.stop();
+});
+
 test("restarting and stopping the plugin clean up subscriptions", () => {
   const harness = createApp();
   const plugin = createPlugin(harness.app);

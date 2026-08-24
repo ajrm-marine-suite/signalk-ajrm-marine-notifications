@@ -28,7 +28,9 @@ vessels.self.plugins.ajrmMarineNotifications
 Contract `notifications-plus-projection` version 1 contains the broker
 `sessionId`, monotonic `sequence`, priority-ordered `active` entries,
 newest-first `recentActivity`, the retained `history` alias, `audioSequence`
-and timestamps.
+and timestamps. The complete projection is republished on a configurable
+heartbeat (10 seconds by default), allowing safety consumers to fail closed if
+the broker becomes unavailable or stale.
 
 Speakable events are emitted once at:
 
@@ -68,7 +70,7 @@ no new notification arrives.
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.7.1 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-notifications.git#v0.7.2 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.2
+
+- Republish the complete authoritative projection on a configurable heartbeat
+  so safety consumers can distinguish a current empty alert set from a stale
+  or unavailable broker.
+
 ## 0.7.1
 
 - Add concise purpose headers to every maintained runtime module so its role is

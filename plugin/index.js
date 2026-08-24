@@ -44,6 +44,15 @@ module.exports = function ajrmMarineNotifications(app) {
         minimum: 10,
         maximum: 1000,
       },
+      heartbeatSeconds: {
+        type: "integer",
+        title: "Active projection heartbeat (seconds)",
+        description:
+          "Republishes the complete active projection so safety consumers can detect a stale or stopped broker.",
+        default: 10,
+        minimum: 1,
+        maximum: 60,
+      },
     },
   };
 
@@ -169,18 +178,24 @@ module.exports = function ajrmMarineNotifications(app) {
         },
       ],
     });
-    scheduleNextExpiry();
+    scheduleNextPublish();
   }
 
-  function scheduleNextExpiry() {
+  function scheduleNextPublish() {
     stopExpiryTimer();
     if (!running) return;
     const nextExpiry = [...state.active.values()]
       .map((envelope) => Date.parse(envelope.expiresAt || ""))
       .filter(Number.isFinite)
       .sort((left, right) => left - right)[0];
-    if (!Number.isFinite(nextExpiry)) return;
-    const delayMs = Math.min(2_147_483_647, Math.max(0, nextExpiry - Date.now() + 10));
+    const nextHeartbeat = Date.now() + options.heartbeatSeconds * 1000;
+    const nextPublish = Number.isFinite(nextExpiry)
+      ? Math.min(nextExpiry + 10, nextHeartbeat)
+      : nextHeartbeat;
+    const delayMs = Math.min(
+      2_147_483_647,
+      Math.max(0, nextPublish - Date.now()),
+    );
     expiryTimer = setTimeout(() => {
       expiryTimer = null;
       if (running) publish();
@@ -207,10 +222,14 @@ module.exports = function ajrmMarineNotifications(app) {
 
 function normalizeOptions(value) {
   const historyLimit = Number.parseInt(value.historyLimit, 10);
+  const heartbeatSeconds = Number.parseInt(value.heartbeatSeconds, 10);
   return {
     historyLimit: Number.isFinite(historyLimit)
       ? Math.min(1000, Math.max(10, historyLimit))
       : 100,
+    heartbeatSeconds: Number.isFinite(heartbeatSeconds)
+      ? Math.min(60, Math.max(1, heartbeatSeconds))
+      : 10,
   };
 }
 
